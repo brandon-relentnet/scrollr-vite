@@ -1,5 +1,4 @@
-// src/content/ContentApp.jsx
-import React, { useEffect } from "react";
+import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { createRoot } from "react-dom/client";
 import Ticker from "./Ticker";
 import { useFetchGames } from "../utils/useFetchGames";
@@ -38,34 +37,7 @@ const ContentApp = () => {
     });
   }, [setSettings]);
 
-  // Compute height based on settings.heightMode
-  const getHeightFromMode = (heightMode) => {
-    switch (heightMode) {
-      case "shorter":
-        return 150; // Adjust as needed
-      case "taller":
-        return 250; // Adjust as needed
-      case "default":
-      default:
-        return 200; // Adjust as needed
-    }
-  };
-
-  const height = getHeightFromMode(settings.heightMode);
-
-  // Function to send the iframe's height to the parent
-  const sendHeightToParent = () => {
-    const height = document.body.scrollHeight;
-    console.log("sendHeightToParent called. Height:", height);
-    window.parent.postMessage({ type: "iframeHeight", height }, "*");
-  };
-
-  // Adjust iframe height when height changes
-  useEffect(() => {
-    sendHeightToParent();
-  }, [height, blocks.length]);
-
-  return <Ticker blocks={blocks} height={height} {...settings} />;
+  return <Ticker blocks={blocks} {...settings} />;
 };
 
 const container = document.getElementById("root");

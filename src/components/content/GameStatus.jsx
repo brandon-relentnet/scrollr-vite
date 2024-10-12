@@ -1,17 +1,17 @@
 // GameStatus.jsx
 import React from "react";
 
-const GameStatus = ({ status, date, isLive }) => {
+const GameStatus = ({ status, date, isLive, currentPeriod }) => {
   const formatDate = (dateString) => {
-    const date = new Date(dateString);
+    const dateObj = new Date(dateString);
     const day = new Intl.DateTimeFormat("en-US", { weekday: "short" }).format(
-      date
+      dateObj
     );
     const formattedDate = new Intl.DateTimeFormat("en-US", {
       month: "2-digit",
       day: "2-digit",
       year: "2-digit",
-    }).format(date);
+    }).format(dateObj);
     return (
       <>
         <strong>{day}</strong>, {formattedDate}
@@ -21,9 +21,18 @@ const GameStatus = ({ status, date, isLive }) => {
 
   return (
     <div className="game-status">
-      <p className="small-text-status">{status}</p>
-      <p className="small-text-date">{formatDate(date)}</p>
-      {isLive && <p className="live-status">LIVE</p>}
+      {isLive ? (
+        <>
+          <p className="live-status">
+            LIVE {currentPeriod && ` - ${currentPeriod}`}
+          </p>
+        </>
+      ) : (
+        <>
+          <p className="small-text-status">{status}</p>
+          <p className="small-text-date">{formatDate(date)}</p>
+        </>
+      )}
     </div>
   );
 };

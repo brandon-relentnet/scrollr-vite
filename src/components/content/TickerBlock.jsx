@@ -4,7 +4,7 @@ import TeamLogo from "./TeamLogo";
 import ScoreRow from "./ScoreRow";
 import GameStatus from "./GameStatus";
 
-const TickerBlock = ({ content }) => {
+const TickerBlock = ({ content, visibleBlocks }) => {
   const handleClick = () => {
     if (content.href) {
       window.open(content.href, "_blank");
@@ -14,7 +14,11 @@ const TickerBlock = ({ content }) => {
   };
 
   return (
-    <div className="ticker-block" onClick={handleClick}>
+    <div
+      className="ticker-block"
+      onClick={handleClick}
+      style={{ flex: `0 0 ${100 / visibleBlocks}%` }}
+    >
       <div className="ticker-block-wrapper">
         <TeamLogo src={content.awayTeamLogo} alt="Away Team Logo" />
         <div className="block-info">
@@ -28,6 +32,7 @@ const TickerBlock = ({ content }) => {
             status={content.status}
             date={content.date}
             isLive={content.isLive}
+            currentPeriod={content.currentPeriod}
           />
         </div>
         <TeamLogo src={content.homeTeamLogo} alt="Home Team Logo" />

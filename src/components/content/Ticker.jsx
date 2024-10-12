@@ -1,61 +1,55 @@
-// src/content/Ticker.jsx
-import React, { useEffect, useRef } from "react";
+// Ticker.jsx
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import TickerBlock from "./TickerBlock";
 import "../css/styles.css";
+import { debounce } from "../utils/debounce"; // Adjust the import path as necessary
 
-const Ticker = ({
-  blocks = [],
-  visibleBlocks = 5,
-  speed = "default",
-  height = 200,
-  heightMode,
-  theme,
-  borderRadius,
-}) => {
+const Ticker = ({ blocks = [], speed = "default", theme, borderRadius }) => {
+  const tickerContainerRef = useRef(null);
   const tickerContentRef = useRef(null);
   const totalBlocks = blocks.length;
 
+  // State for dynamic visibleBlocks
+  const [visibleBlocks, setVisibleBlocks] = useState(1);
+
   useEffect(() => {
-    // Apply theme and border radius to the body of the iframe
+    // Apply theme and border radius to the body
     document.body.className = `${theme} ${borderRadius}`;
   }, [theme, borderRadius]);
 
   // Duplicate blocks for seamless looping
   const tickerBlocks = [...blocks, ...blocks];
 
-  // Use a ref to store currentIndex
+  // Ref to store currentIndex
   const currentIndexRef = useRef(0);
 
-  // Calculate font sizes based on visibleBlocks and heightMode
-  const calculateFontSizes = (visibleBlocks, heightMode) => {
-    let baseFontSize;
-
-    // Adjust base font size based on heightMode
-    switch (heightMode) {
-      case "shorter":
-        baseFontSize = 10;
-        break;
-      case "taller":
-        baseFontSize = 16;
-        break;
-      case "default":
-      default:
-        baseFontSize = 14;
-        break;
+  // Function to calculate visibleBlocks based on container width
+  const updateVisibleBlocks = useCallback(() => {
+    if (tickerContainerRef.current) {
+      const containerWidth = tickerContainerRef.current.offsetWidth;
+      const minBlockWidth = 200; // Desired minimum block width in pixels
+      const calculatedVisibleBlocks = Math.max(
+        1,
+        Math.floor(containerWidth / minBlockWidth)
+      );
+      setVisibleBlocks(calculatedVisibleBlocks);
     }
+  }, []);
 
-    // Adjust font size based on the number of visible blocks
-    const scoreFontSize = baseFontSize * (8 / visibleBlocks);
-    const statusFontSize = baseFontSize * (6 / visibleBlocks);
-    const dateFontSize = baseFontSize * (4 / visibleBlocks);
+  useEffect(() => {
+    // Initial calculation
+    updateVisibleBlocks();
 
-    return { scoreFontSize, statusFontSize, dateFontSize };
-  };
+    // Add event listener for window resize with debounce
+    const handleResize = debounce(updateVisibleBlocks, 100); // Debounce with 100ms delay
 
-  const { scoreFontSize, statusFontSize, dateFontSize } = calculateFontSizes(
-    visibleBlocks,
-    heightMode
-  );
+    window.addEventListener("resize", handleResize);
+
+    // Clean up
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [updateVisibleBlocks]);
 
   useEffect(() => {
     if (totalBlocks === 0) return;
@@ -78,8 +72,8 @@ const Ticker = ({
         break;
     }
 
-    const stepWidth = 100 / visibleBlocks;
     const tickerContent = tickerContentRef.current;
+    const stepWidth = 100 / visibleBlocks;
 
     tickerContent.style.transition = "none";
     tickerContent.style.transform = `translateX(-${
@@ -110,49 +104,20 @@ const Ticker = ({
     };
   }, [totalBlocks, visibleBlocks, speed]);
 
-  // Apply dynamic font sizes based on visibleBlocks and heightMode
-  useEffect(() => {
-    const tickerContainer = tickerContentRef.current?.parentElement;
-    if (tickerContainer) {
-      tickerContainer.style.setProperty(
-        "--score-font-size",
-        `${scoreFontSize}px`
-      );
-      tickerContainer.style.setProperty(
-        "--status-font-size",
-        `${statusFontSize}px`
-      );
-      tickerContainer.style.setProperty(
-        "--date-font-size",
-        `${dateFontSize}px`
-      );
-    }
-  }, [visibleBlocks, heightMode, scoreFontSize, statusFontSize, dateFontSize]);
-
   return (
-    <div
-      className="ticker-container"
-      style={{
-        "--visible-blocks": visibleBlocks,
-        height: `${height}px`,
-      }}
-    >
+    <div className="ticker-container" ref={tickerContainerRef}>
       {totalBlocks > 0 ? (
         <div className="ticker-content" ref={tickerContentRef}>
           {tickerBlocks.map((blockContent, index) => (
-            <TickerBlock key={index} content={blockContent} />
+            <TickerBlock
+              key={index}
+              content={blockContent}
+              visibleBlocks={visibleBlocks}
+            />
           ))}
         </div>
       ) : (
-        <div
-          className="no-game-data"
-          style={{
-            height: `${height}px`,
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-          }}
-        >
+        <div className="no-game-data">
           No available game data, please choose a different preset.
         </div>
       )}

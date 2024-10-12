@@ -1,8 +1,7 @@
 // src/popup/Popup.jsx
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import TotalBlocksManager from "../managers/TotalBlocksManager";
 import ThemeManager from "../managers/ThemeManager";
-import HeightManager from "../managers/HeightManager";
 import SpeedManager from "../managers/SpeedManager";
 import DisplayedWeekManager from "../managers/DisplayedWeekManager";
 import BorderRadiusManager from "../managers/BorderRadiusManager";
@@ -56,11 +55,6 @@ const Popup = () => {
       <SpeedManager
         speed={settings.speed}
         setSpeed={(value) => updateSetting("speed", value)}
-      />
-
-      <HeightManager
-        heightMode={settings.heightMode}
-        setHeightMode={(value) => updateSetting("heightMode", value)}
       />
 
       <DisplayedWeekManager
