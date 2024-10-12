@@ -1,0 +1,40 @@
+/* scaling-variables.css */
+
+/* Default (Classic) Mode Variables */
+:root {
+  --scale-factor: 1; /* Classic */
+  --font-size-base: clamp(14px, 1vw + 1rem, 16px);
+  --font-size-large: clamp(16px, 1.2vw + 1.2rem, 18px);
+  --font-size-small: clamp(12px, 0.8vw + 0.8rem, 14px);
+  --logo-size: clamp(40px, 3vw + 10px, 50px);
+  --padding-base: clamp(0.8em, 1vw + 0.5em, 1em);
+  --padding-large: clamp(1em, 1.2vw + 0.6em, 1.2em);
+  --padding-small: clamp(0.6em, 0.8vw + 0.4em, 0.8em);
+  --ticker-min-height: clamp(20px, 2vw + 10px, 30px);
+}
+
+/* Large Mode */
+.scale-large {
+  --scale-factor: 1.2;
+  --font-size-base: clamp(16px, 1vw + 1rem, 19.2px); /* 16px * 1.2 */
+  --font-size-large: clamp(18px, 1.2vw + 1.2rem, 21.6px); /* 18px * 1.2 */
+  --font-size-small: clamp(14px, 0.8vw + 0.8rem, 16.8px); /* 14px * 1.2 */
+  --logo-size: clamp(48px, 3vw + 10px, 60px); /* 50px * 1.2 */
+  --padding-base: clamp(1em, 1vw + 0.5em, 1.2em);
+  --padding-large: clamp(1.2em, 1.2vw + 0.6em, 1.44em);
+  --padding-small: clamp(0.8em, 0.8vw + 0.4em, 0.96em);
+  --ticker-min-height: clamp(30px, 2vw + 10px, 50px); /* Example min-height for large mode */
+}
+
+/* Small Mode */
+.scale-small {
+  --scale-factor: 0.8;
+  --font-size-base: clamp(10px, 1vw + 1rem, 12.8px); /* 16px * 0.8 */
+  --font-size-large: clamp(12px, 1vw + 1rem, 14.4px); /* 18px * 0.8 */
+  --font-size-small: clamp(10px, 0.8vw + 0.8rem, 11.2px); /* 14px * 0.8 */
+  --logo-size: clamp(32px, 3vw + 10px, 40px); /* 50px * 0.8 */
+  --padding-base: clamp(0.6em, 1vw + 0.5em, 0.8em);
+  --padding-large: clamp(0.96em, 1.2vw + 0.6em, 0.96em);
+  --padding-small: clamp(0.5em, 0.8vw + 0.4em, 0.64em);
+  --ticker-min-height: clamp(15px, 2vw + 10px, 20px); /* Example min-height for small mode */
+}

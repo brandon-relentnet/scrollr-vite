@@ -1,8 +1,9 @@
+// src/defaultSettings.js
 export const defaultSettings = {
   theme: "light",
   speed: "default",
-  borderRadius: "rounded",
+  borderRadius: "6", // Updated to match expected values
   selectedSport: "football",
   weekRange: "current",
-  visibleBlocks: 5,
+  scalingMode: "classic",
 };

@@ -51,7 +51,6 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 auto;
 }
 .ticker-block-wrapper {
   display: flex;
@@ -72,8 +71,8 @@ body {
     rgba(0, 0, 0, 0.23) 0px 6px 6px;
 }
 .team-logo {
-  width: 50px; 
-  height: 50px;
+  width: 75px; 
+  height: 75px;
   object-fit: contain;
   transition: font-size 0.3s ease-in-out;
 }
@@ -88,7 +87,7 @@ body {
   justify-content: center;
   align-items: center;
   font-weight: bold;
-  font-size: 1.2em;
+  font-size: 1em;
 }
 .score-row,
 .small-text-status,
@@ -100,7 +99,7 @@ body {
 .small-text-status,
 .small-text-date,
 .live-status {
-  font-size: 1em; /* Adjust as necessary */
+  font-size: 0.8em; /* Adjust as necessary */
 }
 .team-score {
   margin: 0 0.5em;
@@ -135,7 +134,7 @@ body {
   position: absolute;
 }
 .theme-toggle {
-  top: 0.6em;
+  top: 0.7em;
   right: 0.8em;
 }
 .svg-shadow {
@@ -172,24 +171,22 @@ body {
   position: absolute;
   top: 0;
   right: 0;
-  background-color: var(--base);
+  background-color: var(--mantle);
   z-index: 100;
   transition: all var(--transition-duration) ease;
-  border-radius: var(--border-radius);
-  padding: 1.5em 1.5em 0.5em 1.5em;
-  margin: 1em;
-  width: 25em;
+  width:  400px;
+  height: 600px;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
 }
 .popup-controls .speed-manager,
 .popup-controls .displayed-week-manager,
-.popup-controls .total-blocks-manager,
-.popup-controls .sports-preset-manager {
-  width: 100%;
-  margin-bottom: 1em;
+.popup-controls .sports-preset-manager,
+.popup-controls .scaling-mode-manager {
+  width: 80%;
+  margin: 1em 0 0 0;
 }
 .popup-controls .total-blocks-manager button,
-.popup-controls .displayed-week-manager select,
+.popup-controls .scaling-mode-manager select,
 .popup-controls .speed-manager select,
 .popup-controls .sports-preset-manager select {
   box-shadow: rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px;
@@ -226,15 +223,6 @@ body {
 }
 .popup-controls label {
   font-weight: bold;
-}
-.total-blocks-manager > button:hover {
-  background-color: var(--overlay0);
-  color: var(--base);
-  box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
-}
-.total-blocks-manager button:disabled {
-  background-color: var(--mantle);
-  cursor: not-allowed;
 }
 .popup-controls .select-wrapper::after {
   content: "\25BC";

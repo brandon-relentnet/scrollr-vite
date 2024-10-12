@@ -1,3 +1,4 @@
+// TickerBlock.jsx
 import React from "react";
 import TeamLogo from "./TeamLogo";
 import ScoreRow from "./ScoreRow";

@@ -129,10 +129,9 @@ export const useFetchGames = (settings) => {
 
             const eventDate = new Date(event.date);
             const formattedEventDate = eventDate.toLocaleDateString("en-US", {
-              weekday: "long",
-              year: "numeric",
-              month: "long",
-              day: "numeric",
+              year: "2-digit",
+              month: "2-digit",
+              day: "2-digit",
             });
 
             const homeTeamWon = homeTeam.winner || false;
@@ -145,7 +144,7 @@ export const useFetchGames = (settings) => {
               title: `${awayTeamName} @ ${homeTeamName}`,
               points: `${awayTeamScore} - ${homeTeamScore}`,
               status: status,
-              date: formattedEventDate,
+              date: formattedEventDate, // Updated to short format
               isLive: isLive,
               id: event.id,
               homeTeamLogo,

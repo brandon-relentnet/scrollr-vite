@@ -1,42 +1,96 @@
-import React, { useEffect, useRef } from "react";
+// src/content/Ticker.jsx
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import TickerBlock from "./TickerBlock";
-import "../css/styles.css";
-import { debounce } from "../utils/debounce";
-import useStore from "/store";
-import { useFetchGames } from "../utils/useFetchGames";
+import { debounce } from "../utils/debounce"; // Adjust the import path as necessary
+import { useStore, initializeStore } from "/store"; // Adjust the import path
 
-const Ticker = () => {
+const Ticker = ({ blocks = [] }) => {
+  const { settings } = useStore();
+  const { theme, borderRadius, speed } = settings;
   const tickerContainerRef = useRef(null);
   const tickerContentRef = useRef(null);
-
-  // Get settings from Zustand store
-  const { settings } = useStore();
-  const {
-    speed = "default",
-    theme,
-    borderRadius,
-    visibleBlocks = 5, // Use visibleBlocks from settings
-  } = settings;
-
-  // Fetch blocks using useFetchGames hook
-  const blocks = useFetchGames(settings);
   const totalBlocks = blocks.length;
 
+  // State for dynamic visibleBlocks
+  const [visibleBlocks, setVisibleBlocks] = useState(1);
+
+  useEffect(() => {
+    // Initialize the store
+    initializeStore();
+  }, []);
+
+  useEffect(() => {
+    // Apply theme and border radius classes to the iframe's body
+    const applyClasses = () => {
+      const { theme, borderRadius } = settings;
+
+      // Define available themes and border radii
+      const themes = ["mocha", "latte", "frappe", "macchiato", "light"];
+      const borderRadii = ["0", "6", "18"];
+
+      // Remove existing theme classes
+      themes.forEach((t) => document.body.classList.remove(t));
+
+      // Add the current theme class
+      if (theme && themes.includes(theme)) {
+        document.body.classList.add(theme);
+        console.log(`Ticker: Applied theme: ${theme}`);
+      }
+
+      // Remove existing border-radius classes
+      borderRadii.forEach((r) =>
+        document.body.classList.remove(`border-radius-${r}`)
+      );
+
+      // Add the current border-radius class
+      if (
+        borderRadius !== undefined &&
+        borderRadii.includes(String(borderRadius))
+      ) {
+        document.body.classList.add(`border-radius-${borderRadius}`);
+        console.log(`Ticker: Applied border-radius-${borderRadius}`);
+      } else {
+        console.log(`Ticker: Invalid borderRadius value: ${borderRadius}`);
+      }
+    };
+
+    applyClasses();
+  }, [settings.theme, settings.borderRadius]);
+
   // Duplicate blocks for seamless looping
-  const tickerBlocks = React.useMemo(() => [...blocks, ...blocks], [blocks]);
+  const tickerBlocks = [...blocks, ...blocks];
 
+  // Ref to store currentIndex
   const currentIndexRef = useRef(0);
-  const stepWidth = 100 / visibleBlocks;
 
-  // Apply theme and border radius to the body
-  useEffect(() => {
-    document.body.className = `${theme} ${borderRadius}`;
-  }, [theme, borderRadius]);
+  // Function to calculate visibleBlocks based on container width
+  const updateVisibleBlocks = useCallback(() => {
+    if (tickerContainerRef.current) {
+      const containerWidth = tickerContainerRef.current.offsetWidth;
+      const minBlockWidth = 250; // Desired minimum block width in pixels
+      const calculatedVisibleBlocks = Math.max(
+        1,
+        Math.floor(containerWidth / minBlockWidth)
+      );
+      setVisibleBlocks(calculatedVisibleBlocks);
+      console.log(`Ticker: Visible blocks set to: ${calculatedVisibleBlocks}`);
+    }
+  }, []);
 
-  // Reset currentIndex when visibleBlocks or totalBlocks change
   useEffect(() => {
-    currentIndexRef.current = 0;
-  }, [visibleBlocks, totalBlocks]);
+    // Initial calculation
+    updateVisibleBlocks();
+
+    // Add event listener for window resize with debounce
+    const handleResize = debounce(updateVisibleBlocks, 100); // Debounce with 100ms delay
+
+    window.addEventListener("resize", handleResize);
+
+    // Clean up
+    return () => {
+      window.removeEventListener("resize", handleResize);
+    };
+  }, [updateVisibleBlocks]);
 
   useEffect(() => {
     if (totalBlocks === 0) return;
@@ -60,6 +114,7 @@ const Ticker = () => {
     }
 
     const tickerContent = tickerContentRef.current;
+    const stepWidth = 100 / visibleBlocks;
 
     tickerContent.style.transition = "none";
     tickerContent.style.transform = `translateX(-${
@@ -84,11 +139,14 @@ const Ticker = () => {
     };
 
     const intervalId = setInterval(moveNext, stepDuration);
+    console.log(
+      `Ticker: Ticker interval set with stepDuration: ${stepDuration}ms`
+    );
 
     return () => {
       clearInterval(intervalId);
     };
-  }, [totalBlocks, visibleBlocks, speed, stepWidth]);
+  }, [totalBlocks, visibleBlocks, speed]);
 
   return (
     <div className="ticker-container" ref={tickerContainerRef}>

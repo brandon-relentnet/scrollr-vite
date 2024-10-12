@@ -1,43 +1,74 @@
-// src/popup/Popup.jsx
+// src/components/popup/Popup.jsx
 import React, { useEffect } from "react";
 import ThemeManager from "../managers/ThemeManager";
 import SpeedManager from "../managers/SpeedManager";
 import DisplayedWeekManager from "../managers/DisplayedWeekManager";
 import BorderRadiusManager from "../managers/BorderRadiusManager";
 import SportsPresetManager from "../managers/SportsPresetManager";
-import "../css/styles.css";
-import useStore from "/store";
-import { defaultSettings } from "/defaultSettings";
-import VisibleBlocksManager from '../managers/VisibleBlocksManager'; // Import the new manager
+import { useStore, initializeStore } from "/store"; // Adjusted relative path
+import ScalingModeManager from "../managers/ScalingModeManager";
 
 const Popup = () => {
-  const { settings, setSettings } = useStore();
+  const { settings, scalingMode } = useStore();
 
-  // Load settings from chrome.storage and listen for changes
   useEffect(() => {
-    // Load initial settings
-    chrome.storage.sync.get(defaultSettings, (result) => {
-      console.log("Popup: Loaded settings", result);
-      setSettings(result);
-    });
+    // Initialize the store
+    initializeStore();
+  }, []);
 
-    // Listen for changes in chrome.storage
-    chrome.storage.onChanged.addListener((changes, areaName) => {
-      console.log("Popup: Storage changed", changes, areaName);
-      if (areaName === "sync") {
-        const newSettings = { ...settings };
-        for (let key in changes) {
-          newSettings[key] = changes[key].newValue;
-        }
-        setSettings(newSettings);
-      }
-    });
-  }, [setSettings]);
+  // Apply theme and border radius classes to the popup's body
+  useEffect(() => {
+    const { theme, borderRadius } = settings;
+
+    // Define available themes and border radii
+    const themes = ["mocha", "latte", "frappe", "macchiato", "light"];
+    const borderRadii = ["0", "6", "18"];
+
+    // Remove existing theme classes
+    themes.forEach((t) => document.body.classList.remove(t));
+
+    // Add the current theme class
+    if (theme && themes.includes(theme)) {
+      document.body.classList.add(theme);
+      console.log(`Applied theme: ${theme}`);
+    }
+
+    // Remove existing border-radius classes
+    borderRadii.forEach((r) =>
+      document.body.classList.remove(`border-radius-${r}`)
+    );
+
+    // Add the current border-radius class
+    if (
+      borderRadius !== undefined &&
+      borderRadii.includes(String(borderRadius))
+    ) {
+      document.body.classList.add(`border-radius-${borderRadius}`);
+      console.log(`Applied border-radius-${borderRadius}`);
+    }
+  }, [settings.theme, settings.borderRadius]);
 
   const updateSetting = (key, value) => {
-    const newSettings = { ...settings, [key]: value };
-    setSettings(newSettings);
-    chrome.storage.sync.set({ [key]: value });
+    const newSetting = { [key]: value };
+    useStore.getState().setSettings(newSetting); // Update Zustand store
+    chrome.storage.sync.set(newSetting, () => {
+      if (chrome.runtime.lastError) {
+        console.error(`Error setting ${key}:`, chrome.runtime.lastError);
+      } else {
+        console.log(`Successfully set ${key} to`, value);
+      }
+    });
+  };
+
+  const updateScalingMode = (mode) => {
+    useStore.getState().setScalingMode(mode);
+    chrome.storage.sync.set({ scalingMode: mode }, () => {
+      if (chrome.runtime.lastError) {
+        console.error("Error setting scalingMode:", chrome.runtime.lastError);
+      } else {
+        console.log("Successfully set scalingMode to", mode);
+      }
+    });
   };
 
   return (
@@ -63,9 +94,10 @@ const Popup = () => {
         borderRadius={settings.borderRadius}
         setBorderRadius={(value) => updateSetting("borderRadius", value)}
       />
-      <VisibleBlocksManager
-        visibleBlocks={settings.visibleBlocks}
-        setVisibleBlocks={(value) => updateSetting("visibleBlocks", value)}
+      {/* Scaling Mode Selector */}
+      <ScalingModeManager
+        scalingMode={scalingMode}
+        setScalingMode={updateScalingMode}
       />
     </div>
   );
