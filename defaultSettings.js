@@ -1,9 +1,8 @@
-// defaultSettings.js
 export const defaultSettings = {
-  visibleBlocks: 4,
+  theme: "light",
   speed: "default",
-  weekRange: "current",
+  borderRadius: "rounded",
   selectedSport: "football",
-  theme: "mocha",
-  borderRadius: "border-radius-6",
+  weekRange: "current",
+  visibleBlocks: 5,
 };

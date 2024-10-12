@@ -51,6 +51,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex: 0 0 auto;
 }
 .ticker-block-wrapper {
   display: flex;
@@ -87,7 +88,7 @@ body {
   justify-content: center;
   align-items: center;
   font-weight: bold;
-  font-size: 1em;
+  font-size: 1.2em;
 }
 .score-row,
 .small-text-status,
@@ -99,7 +100,7 @@ body {
 .small-text-status,
 .small-text-date,
 .live-status {
-  font-size: 0.8em; /* Adjust as necessary */
+  font-size: 1em; /* Adjust as necessary */
 }
 .team-score {
   margin: 0 0.5em;

@@ -1,55 +1,42 @@
-// Ticker.jsx
-import React, { useEffect, useRef, useState, useCallback } from "react";
+import React, { useEffect, useRef } from "react";
 import TickerBlock from "./TickerBlock";
 import "../css/styles.css";
-import { debounce } from "../utils/debounce"; // Adjust the import path as necessary
+import { debounce } from "../utils/debounce";
+import useStore from "/store";
+import { useFetchGames } from "../utils/useFetchGames";
 
-const Ticker = ({ blocks = [], speed = "default", theme, borderRadius }) => {
+const Ticker = () => {
   const tickerContainerRef = useRef(null);
   const tickerContentRef = useRef(null);
+
+  // Get settings from Zustand store
+  const { settings } = useStore();
+  const {
+    speed = "default",
+    theme,
+    borderRadius,
+    visibleBlocks = 5, // Use visibleBlocks from settings
+  } = settings;
+
+  // Fetch blocks using useFetchGames hook
+  const blocks = useFetchGames(settings);
   const totalBlocks = blocks.length;
 
-  // State for dynamic visibleBlocks
-  const [visibleBlocks, setVisibleBlocks] = useState(1);
+  // Duplicate blocks for seamless looping
+  const tickerBlocks = React.useMemo(() => [...blocks, ...blocks], [blocks]);
 
+  const currentIndexRef = useRef(0);
+  const stepWidth = 100 / visibleBlocks;
+
+  // Apply theme and border radius to the body
   useEffect(() => {
-    // Apply theme and border radius to the body
     document.body.className = `${theme} ${borderRadius}`;
   }, [theme, borderRadius]);
 
-  // Duplicate blocks for seamless looping
-  const tickerBlocks = [...blocks, ...blocks];
-
-  // Ref to store currentIndex
-  const currentIndexRef = useRef(0);
-
-  // Function to calculate visibleBlocks based on container width
-  const updateVisibleBlocks = useCallback(() => {
-    if (tickerContainerRef.current) {
-      const containerWidth = tickerContainerRef.current.offsetWidth;
-      const minBlockWidth = 200; // Desired minimum block width in pixels
-      const calculatedVisibleBlocks = Math.max(
-        1,
-        Math.floor(containerWidth / minBlockWidth)
-      );
-      setVisibleBlocks(calculatedVisibleBlocks);
-    }
-  }, []);
-
+  // Reset currentIndex when visibleBlocks or totalBlocks change
   useEffect(() => {
-    // Initial calculation
-    updateVisibleBlocks();
-
-    // Add event listener for window resize with debounce
-    const handleResize = debounce(updateVisibleBlocks, 100); // Debounce with 100ms delay
-
-    window.addEventListener("resize", handleResize);
-
-    // Clean up
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
-  }, [updateVisibleBlocks]);
+    currentIndexRef.current = 0;
+  }, [visibleBlocks, totalBlocks]);
 
   useEffect(() => {
     if (totalBlocks === 0) return;
@@ -73,7 +60,6 @@ const Ticker = ({ blocks = [], speed = "default", theme, borderRadius }) => {
     }
 
     const tickerContent = tickerContentRef.current;
-    const stepWidth = 100 / visibleBlocks;
 
     tickerContent.style.transition = "none";
     tickerContent.style.transform = `translateX(-${
@@ -102,7 +88,7 @@ const Ticker = ({ blocks = [], speed = "default", theme, borderRadius }) => {
     return () => {
       clearInterval(intervalId);
     };
-  }, [totalBlocks, visibleBlocks, speed]);
+  }, [totalBlocks, visibleBlocks, speed, stepWidth]);
 
   return (
     <div className="ticker-container" ref={tickerContainerRef}>
