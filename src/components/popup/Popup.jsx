@@ -8,33 +8,36 @@ import DisplayedWeekManager from "../managers/DisplayedWeekManager";
 import BorderRadiusManager from "../managers/BorderRadiusManager";
 import SportsPresetManager from "../managers/SportsPresetManager";
 import "../css/styles.css";
+import useStore from "/store";
+import { defaultSettings } from "/defaultSettings";
 
 const Popup = () => {
-  const defaultSettings = {
-    visibleBlocks: 4,
-    speed: "default",
-    heightMode: "default",
-    weekRange: "current",
-    selectedSport: "football",
-    theme: "mocha",
-    borderRadius: "border-radius-6",
-  };
+  const { settings, setSettings } = useStore();
 
-  const [settings, setSettings] = useState(defaultSettings);
-
+  // Load settings from chrome.storage and listen for changes
   useEffect(() => {
-    // Load settings from chrome.storage
+    // Load initial settings
     chrome.storage.sync.get(defaultSettings, (result) => {
+      console.log("Popup: Loaded settings", result);
       setSettings(result);
     });
-  }, []);
 
-  // Update individual settings
+    // Listen for changes in chrome.storage
+    chrome.storage.onChanged.addListener((changes, areaName) => {
+      console.log("Popup: Storage changed", changes, areaName);
+      if (areaName === "sync") {
+        const newSettings = {};
+        for (let key in changes) {
+          newSettings[key] = changes[key].newValue;
+        }
+        setSettings(newSettings);
+      }
+    });
+  }, [setSettings]);
+
   const updateSetting = (key, value) => {
     const newSettings = { ...settings, [key]: value };
     setSettings(newSettings);
-
-    // Save to chrome.storage
     chrome.storage.sync.set({ [key]: value });
   };
 
