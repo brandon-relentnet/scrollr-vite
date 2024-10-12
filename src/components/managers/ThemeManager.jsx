@@ -1,6 +1,6 @@
 // src/components/managers/ThemeManager.jsx
 import React from "react";
-import "../../css/styles.css";
+import "../css/styles.css";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faPalette,

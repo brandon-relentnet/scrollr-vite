@@ -1,6 +1,6 @@
 // src/components/managers/BorderRadiusManager.jsx
 import React from "react";
-import "../../css/styles.css";
+import "../css/styles.css";
 
 const BorderRadiusManager = ({ borderRadius, setBorderRadius }) => {
   const getNextBorderRadius = () => {

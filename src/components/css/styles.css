@@ -3,20 +3,23 @@
 
 body {
   font-family: "Poppins", sans-serif;
-  background-color: var(--crust);
   color: var(--text);
   transition: color var(--transition-duration) ease,
     background-color var(--transition-duration) ease;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Prevent scrollbars */
+  background: transparent;
 }
-.ticker-container, .no-game-data {
+.ticker-container,
+.no-game-data {
   overflow: hidden;
   flex-direction: column;
   width: 100%;
-  position: absolute;
-  bottom: 0px;
   background-color: var(--base);
   transition: all var(--transition-duration) ease;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
+   /* Align content to the top */
 }
 .ticker-content {
   display: flex;
@@ -134,10 +137,16 @@ body {
 }
 /* Drop shadow effect for SVG */
 .svg-shadow {
-  filter: drop-shadow(rgba(0, 0, 0, 0.12) 0px 1px 3px, rgba(0, 0, 0, 0.24) 0px 1px 2px);
+  filter: drop-shadow(
+    rgba(0, 0, 0, 0.12) 0px 1px 3px,
+    rgba(0, 0, 0, 0.24) 0px 1px 2px
+  );
 }
 .svg-shadow:hover {
-  filter: drop-shadow(rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px);
+  filter: drop-shadow(
+    rgba(0, 0, 0, 0.16) 0px 3px 6px,
+    rgba(0, 0, 0, 0.23) 0px 3px 6px
+  );
 }
 .border-radius-toggle {
   top: 0.6em;
@@ -165,7 +174,7 @@ body {
   z-index: 100;
   transition: all var(--transition-duration) ease;
   border-radius: var(--border-radius);
-  padding: 1.5em 1.5em .5em 1.5em;
+  padding: 1.5em 1.5em 0.5em 1.5em;
   margin: 1em;
   width: 25em;
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
@@ -241,4 +250,3 @@ body {
   background-color: var(--surface1);
   box-shadow: rgba(0, 0, 0, 0.16) 0px 3px 6px, rgba(0, 0, 0, 0.23) 0px 3px 6px;
 }
-

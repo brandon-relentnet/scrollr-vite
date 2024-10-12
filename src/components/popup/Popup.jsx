@@ -1,12 +1,13 @@
 // src/popup/Popup.jsx
 import React, { useState, useEffect } from "react";
-import TotalBlocksManager from "../components/managers/TotalBlocksManager";
-import ThemeManager from "../components/managers/ThemeManager";
-import HeightManager from "../components/managers/HeightManager";
-import SpeedManager from "../components/managers/SpeedManager";
-import DisplayedWeekManager from "../components/managers/DisplayedWeekManager";
-import BorderRadiusManager from "../components/managers/BorderRadiusManager";
-import SportsPresetManager from "../components/managers/SportsPresetManager";
+import TotalBlocksManager from "../managers/TotalBlocksManager";
+import ThemeManager from "../managers/ThemeManager";
+import HeightManager from "../managers/HeightManager";
+import SpeedManager from "../managers/SpeedManager";
+import DisplayedWeekManager from "../managers/DisplayedWeekManager";
+import BorderRadiusManager from "../managers/BorderRadiusManager";
+import SportsPresetManager from "../managers/SportsPresetManager";
+import "../css/styles.css";
 
 const Popup = () => {
   const defaultSettings = {
