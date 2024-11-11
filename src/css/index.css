@@ -6,8 +6,12 @@
 @tailwind utilities;
 
 body {
-    background-color: var(--base);
+    background-color: var(--mantle);
     height: 100%;
     transition: background-color .3s ease;
     font-family: var(--fontFamily);
+}
+
+.event-slide {
+    min-width: 300px; /* Set your preferred minimum width */
 }

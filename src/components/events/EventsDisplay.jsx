@@ -1,13 +1,16 @@
-// src/components/EventsDisplay.js
-import React from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Slider from 'react-slick';
 import EventCard from './EventCard';
+import "slick-carousel/slick/slick.css";
+import "slick-carousel/slick/slick-theme.css";
 
 const EventsDisplay = ({ events }) => {
     if (!events || events.length === 0) return <p>No events data available.</p>;
 
-    const speed = useSelector((state) => state.carouselSpeed); // Get speed from Redux store
+    const speed = useSelector((state) => state.carouselSpeed) || 'classic';
+    const pinnedEvents = useSelector((state) => state.pinnedEvents) || [];
+    const unpinnedEvents = events.filter(event => !pinnedEvents.includes(event.id));
 
     // Determine the speed settings based on the speed
     let autoplaySpeed = 3000; // default for 'classic'
@@ -21,72 +24,89 @@ const EventsDisplay = ({ events }) => {
         animationSpeed = 500; // faster animation speed
     }
 
-    const maxSlidesToShow = Math.min(events.length, 8); // Maximum slides to show is 8 or total events
+    const sliderRef = useRef(null);
+    const carouselContainerRef = useRef(null);
+
+    // State to manage slidesToShow
+    const [slidesToShow, setSlidesToShow] = useState(3);
+
+    // Minimum width per slide in pixels
+    const minSlideWidth = 300; // Adjust as needed
+
+    // Function to calculate slidesToShow based on container width
+    const calculateSlidesToShow = () => {
+        if (!carouselContainerRef.current) return;
+        const containerWidth = carouselContainerRef.current.offsetWidth;
+        const newSlidesToShow = Math.max(
+            1,
+            Math.floor(containerWidth / minSlideWidth)
+        );
+        setSlidesToShow(newSlidesToShow);
+    };
+
+    useEffect(() => {
+        // Initial calculation
+        calculateSlidesToShow();
+
+        // Create a ResizeObserver to monitor container size changes
+        const resizeObserver = new ResizeObserver(() => {
+            calculateSlidesToShow();
+        });
+
+        if (carouselContainerRef.current) {
+            resizeObserver.observe(carouselContainerRef.current);
+        }
+
+        // Cleanup on unmount
+        return () => {
+            resizeObserver.disconnect();
+        };
+    }, [pinnedEvents]); // Recalculate when pinnedEvents change
+
+    // Slider settings without 'responsive'
     const settings = {
         dots: false,
         arrows: false,
-        infinite: events.length > maxSlidesToShow, // Disable infinite loop if not enough slides
+        infinite: unpinnedEvents.length > slidesToShow,
         speed: animationSpeed,
-        slidesToShow: maxSlidesToShow,
         slidesToScroll: 1,
         autoplay: true,
         autoplaySpeed: autoplaySpeed,
-        responsive: [
-            // Breakpoints adjusted to not exceed events.length
-            {
-                breakpoint: 2560,
-                settings: {
-                    slidesToShow: Math.min(events.length, 7),
-                    slidesToScroll: 1,
-                },
-            },
-            {
-                breakpoint: 1920,
-                settings: {
-                    slidesToShow: Math.min(events.length, 6),
-                    slidesToScroll: 1,
-                },
-            },
-            {
-                breakpoint: 1600,
-                settings: {
-                    slidesToShow: Math.min(events.length, 5),
-                    slidesToScroll: 1,
-                },
-            },
-            {
-                breakpoint: 1366,
-                settings: {
-                    slidesToShow: Math.min(events.length, 4),
-                    slidesToScroll: 1,
-                },
-            },
-            {
-                breakpoint: 1024,
-                settings: {
-                    slidesToShow: Math.min(events.length, 3),
-                    slidesToScroll: 1,
-                },
-            },
-            {
-                breakpoint: 800,
-                settings: {
-                    slidesToShow: Math.min(events.length, 2),
-                    slidesToScroll: 1,
-                },
-            },
-        ],
+        slidesToShow: slidesToShow,
+        // Removed 'responsive' settings
     };
 
     return (
-        <div className="mt-4 bg-base">
-            <Slider {...settings}>
-                {events.map((event, index) => (
-                    <div key={index}>
-                        <EventCard event={event} />
+        <div className="mt-4 bg-base overflow-hidden">
+            <div className="flex items-stretch">
+                {/* Pinned Events Section */}
+                {pinnedEvents.length > 0 && (
+                    <div className="flex flex-shrink-0 h-full overflow-hidden mr-4">
+                        {events
+                            .filter(event => pinnedEvents.includes(event.id))
+                            .map(event => (
+                                <div key={event.id} className="event-slide mx-2">
+                                    <EventCard event={event} />
+                                </div>
+                            ))}
                     </div>
-                ))}
-            </Slider>
+                )}
+
+                {/* Carousel for Unpinned Events */}
+                {unpinnedEvents.length > 0 ? (
+                    <div className="overflow-hidden h-full flex-grow" ref={carouselContainerRef}>
+                        <Slider key={`slider-${slidesToShow}`} ref={sliderRef} {...settings}>
+                            {unpinnedEvents.map(event => (
+                                <div key={event.id} className="event-slide">
+                                    <EventCard event={event} />
+                                </div>
+                            ))}
+                        </Slider>
+                    </div>
+                ) : (
+                    <p>No more events to display.</p>
+                )}
+            </div>
         </div>
     );
 };

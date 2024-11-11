@@ -4,6 +4,7 @@ import themeReducer from './store/themeSlice';
 import accentReducer from './store/accentSlice';
 import fontFamilyReducer from './store/fontFamilySlice';
 import speedReducer from './store/speedSlice';
+import pinnedEventsReducer from './store/pinnedEventsSlice';
 import { loadState, saveState } from './localStorage';
 
 const preloadedState = loadState();
@@ -14,6 +15,7 @@ export const store = configureStore({
         accent: accentReducer,
         fontFamily: fontFamilyReducer,
         carouselSpeed: speedReducer,
+        pinnedEvents: pinnedEventsReducer,
     },
     preloadedState, // Load initial state from local storage
 });
