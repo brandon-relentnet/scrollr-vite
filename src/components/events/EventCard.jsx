@@ -62,7 +62,7 @@ const EventCard = ({ event }) => {
         }`;
 
     return (
-        <div className="p-2">
+        <div className="p-1">
             <div
                 onClick={() => gameLink && window.open(gameLink, '_blank')}
                 className="relative bg-surface0 rounded shadow p-4 h-32 flex flex-col items-center justify-center cursor-pointer border-2 border-transparent hover:border-accent transition duration-300 hover:shadow-lg"

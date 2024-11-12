@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { io } from 'socket.io-client';
 import { useDispatch, useSelector } from 'react-redux';
-import { setEvents } from '../store/eventsSlice';
+import { setEvents } from '../../store/eventsSlice';
 
 // Initialize Socket.IO outside the component to prevent multiple connections
 const socket = io('http://localhost:3000', { // Ensure this URL is correct

@@ -5,7 +5,6 @@ import EventsDisplay from './events/EventsDisplay';
 
 const DataDisplay = () => {
     const events = useSelector((state) => state.eventsData);
-    const selectedLeague = useSelector((state) => state.league);
 
     // Handle loading and error states based on eventsData
     const isLoading = !events || events.length === 0;

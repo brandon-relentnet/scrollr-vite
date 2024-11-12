@@ -5,7 +5,7 @@ import Theme from './features/theme/Theme';
 import Accent from './features/accent/Accent';
 import FontFamily from './features/font-family/FontFamily';
 import { useStyles } from './css/Styles';
-import EventsProvider from './components/EventsProvider';
+import EventsProvider from './components/events/EventsProvider';
 import { useSelector } from 'react-redux';
 import { StylesProvider } from './css/Styles';
 import Settings from './components/Settings';
