@@ -5,11 +5,15 @@ import App from './App.jsx';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import './utils/fontAwesome';
+import { Provider } from 'react-redux';
+import { store } from './store';
 
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById('root')).render(
     <QueryClientProvider client={queryClient}>
+    <Provider store={store}>
       <App />
+    </Provider>
     </QueryClientProvider>
 )

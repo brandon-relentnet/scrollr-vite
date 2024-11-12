@@ -5,6 +5,7 @@ import accentReducer from './store/accentSlice';
 import fontFamilyReducer from './store/fontFamilySlice';
 import speedReducer from './store/speedSlice';
 import pinnedEventsReducer from './store/pinnedEventsSlice';
+import leagueReducer from './store/leagueSlice'; // Import leagueReducer
 import { loadState, saveState } from './localStorage';
 
 const preloadedState = loadState();
@@ -16,6 +17,7 @@ export const store = configureStore({
         fontFamily: fontFamilyReducer,
         carouselSpeed: speedReducer,
         pinnedEvents: pinnedEventsReducer,
+        league: leagueReducer, // Add league to reducers
     },
     preloadedState, // Load initial state from local storage
 });

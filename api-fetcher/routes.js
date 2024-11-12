@@ -4,35 +4,32 @@ const Data = require('./models/Data');
 
 const router = express.Router();
 
-// Fetch season data
-router.get('/api/season', async (req, res) => {
-    try {
-        const data = await Data.findOne().sort({ fetchedAt: -1 });
-        res.json(data.data.season); // Access season inside the nested data object
-    } catch (error) {
-        console.error('Error fetching season:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
+// Fetch specific API data based on identifier
+router.get('/api/events/:id', async (req, res) => {
+    const { id } = req.params; // Extract 'id' from the URL
 
-// Fetch week data
-router.get('/api/week', async (req, res) => {
     try {
-        const data = await Data.findOne().sort({ fetchedAt: -1 });
-        res.json(data.data.week); // Access week inside the nested data object
-    } catch (error) {
-        console.error('Error fetching week:', error);
-        res.status(500).json({ message: 'Server error' });
-    }
-});
+        // Validate the 'id' parameter
+        const validIds = ['api-data-nfl', 'api-data-mlb', 'api-data-nhl', 'api-data-nba'];
+        if (!validIds.includes(id)) {
+            return res.status(400).json({ message: 'Invalid identifier' });
+        }
 
-// Fetch events data
-router.get('/api/events', async (req, res) => {
-    try {
-        const data = await Data.findOne().sort({ fetchedAt: -1 });
-        res.json(data.data.events); // Access events inside the nested data object
+        // Fetch the document with the specified _id
+        const dataDocument = await Data.findById(id);
+
+        if (!dataDocument) {
+            return res.status(404).json({ message: 'Data not found for the given identifier' });
+        }
+
+        // Ensure that 'events' exist within the nested 'data' object
+        if (!dataDocument.data || !dataDocument.data.events) {
+            return res.status(404).json({ message: 'Events data not available' });
+        }
+
+        res.json(dataDocument.data.events); // Return the 'events' array
     } catch (error) {
-        console.error('Error fetching events:', error);
+        console.error(`Error fetching data for identifier (${id}):`, error);
         res.status(500).json({ message: 'Server error' });
     }
 });

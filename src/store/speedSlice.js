@@ -1,4 +1,4 @@
-// src/features/speedSlice.js
+// src/store/speedSlice.js
 import { createSlice } from '@reduxjs/toolkit';
 
 const speedSlice = createSlice({

@@ -6,17 +6,16 @@ import Accent from './features/accent/Accent';
 import FontFamily from './features/font-family/FontFamily';
 import { useStyles } from './css/Styles';
 
-import { Provider } from 'react-redux';
-import { store } from './store';
+import { useSelector } from 'react-redux';
 import { StylesProvider } from './css/Styles';
 import Settings from './components/Settings';
 
 function App() {
   const styles = useStyles();
+  const selectedLeague = useSelector((state) => state.league);
 
   return (
     <div className={`${styles.page}`}>
-      <Provider store={store}>
         <StylesProvider>
           <Theme />
           <Accent />
@@ -24,11 +23,10 @@ function App() {
 
           <Settings />
           <div className="fixed bottom-0 left-0 right-0">
-            <DataDisplay />
+            <DataDisplay identifier={selectedLeague} />
           </div>
 
         </StylesProvider>
-      </Provider >
     </div>
   );
 }
