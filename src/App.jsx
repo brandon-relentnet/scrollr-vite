@@ -5,10 +5,12 @@ import Theme from './features/theme/Theme';
 import Accent from './features/accent/Accent';
 import FontFamily from './features/font-family/FontFamily';
 import { useStyles } from './css/Styles';
-
+import EventsProvider from './components/EventsProvider';
 import { useSelector } from 'react-redux';
 import { StylesProvider } from './css/Styles';
 import Settings from './components/Settings';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   const styles = useStyles();
@@ -16,17 +18,19 @@ function App() {
 
   return (
     <div className={`${styles.page}`}>
-        <StylesProvider>
-          <Theme />
-          <Accent />
-          <FontFamily />
+      <StylesProvider>
+        <EventsProvider />
+        <ToastContainer />
+        <Theme />
+        <Accent />
+        <FontFamily />
 
-          <Settings />
-          <div className="fixed bottom-0 left-0 right-0">
-            <DataDisplay identifier={selectedLeague} />
-          </div>
+        <Settings />
+        <div className="fixed bottom-0 left-0 right-0">
+          <DataDisplay identifier={selectedLeague} />
+        </div>
 
-        </StylesProvider>
+      </StylesProvider>
     </div>
   );
 }

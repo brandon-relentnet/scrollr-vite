@@ -24,7 +24,7 @@ const leagueTasks = {};
 const scheduleLeagueJob = (leagueKey, leagueUrl, io, isLive) => {
     // Initialize the leagueTasks entry if it doesn't exist
     if (!leagueTasks[leagueKey]) {
-        leagueTasks[leagueKey] = { isLive: isLive, task: null };
+        leagueTasks[leagueKey] = { isLive: isLive, task: null, counter: 0 }; // Add counter
     }
 
     // If a task already exists, stop it before rescheduling
@@ -40,6 +40,10 @@ const scheduleLeagueJob = (leagueKey, leagueUrl, io, isLive) => {
     const task = cron.schedule(cronExpression, async () => {
         console.log(`⏰ Cron job triggered for ${leagueKey.toUpperCase()}: Fetching data...`);
         const liveStatus = await fetchDataAndSave(leagueKey, leagueUrl, io);
+
+        // Increment the counter each time an API call is made
+        leagueTasks[leagueKey].counter += 1;
+        console.log(`🔄 API call count for ${leagueKey.toUpperCase()}: ${leagueTasks[leagueKey].counter}`);
 
         if (liveStatus !== null && liveStatus !== leagueTasks[leagueKey].isLive) {
             leagueTasks[leagueKey].isLive = liveStatus;
@@ -59,7 +63,7 @@ const scheduleLeagueJob = (leagueKey, leagueUrl, io, isLive) => {
 const startCronJobs = async (io) => {
     for (const [leagueKey, leagueUrl] of Object.entries(LEAGUES)) {
         const live = await fetchDataAndSave(leagueKey, leagueUrl, io);
-        leagueTasks[leagueKey] = { isLive: live, task: null };
+        leagueTasks[leagueKey] = { isLive: live, task: null, counter: 0 }; // Initialize counter
         scheduleLeagueJob(leagueKey, leagueUrl, io, live);
     }
 

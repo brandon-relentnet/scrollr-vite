@@ -1,15 +1,21 @@
 // src/pages/Home.jsx
 import React from 'react';
+import { useSelector } from 'react-redux';
 import ThemeDropdown from '../features/theme/ThemeDropdown';
 import AccentDropdown from '../features/accent/AccentDropdown';
 import FontFamilyDropdown from '../features/font-family/FontFamilyDropdown';
-import ModeDropdown from '../features/mode/SpeedDropdown';
+import SpeedDropdown from '../features/mode/SpeedDropdown';
 import { useStyles } from '../css/Styles';
 import PageHeaders from './PageHeaders';
 import LeagueDropdown from '../features/league/LeagueDropdown';
+import FavoriteTeamDropdown from '../features/teams/FavoriteTeamDropdown';
 
 function Settings() {
     const styles = useStyles();
+    const selectedLeague = useSelector((state) => state.league);
+    const events = useSelector((state) => state.eventsData);
+
+    const isEventsLoading = selectedLeague && events.length === 0;
     
     return (
         <div>
@@ -29,11 +35,22 @@ function Settings() {
                         <label className={`${styles.label}`}>Font Family:</label>
                         <FontFamilyDropdown />
                         <label className={`${styles.label}`}>Speed:</label>
-                        <ModeDropdown />
+                        <SpeedDropdown />
                     </div>
                     <div className="text-left">
                         <label className={`${styles.label}`}>League:</label>
                         <LeagueDropdown />
+                        <label className={`${styles.label}`}>Favorite Team:</label>
+                        {/* Favorite Team Dropdown */}
+                        {selectedLeague && (
+                            <div>
+                                {isEventsLoading ? (
+                                    <p>Loading teams...</p>
+                                ) : (
+                                    <FavoriteTeamDropdown events={events} />
+                                )}
+                            </div>
+                        )}
                     </div>
                 </div>
 

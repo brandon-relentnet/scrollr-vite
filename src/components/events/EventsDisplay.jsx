@@ -1,3 +1,4 @@
+// src/components/events/EventsDisplay.jsx
 import React, { useRef, useEffect, useState } from 'react';
 import { useSelector } from 'react-redux';
 import Slider from 'react-slick';
@@ -5,12 +6,32 @@ import EventCard from './EventCard';
 import "slick-carousel/slick/slick.css";
 import "slick-carousel/slick/slick-theme.css";
 
-const EventsDisplay = ({ events }) => {
-    if (!events || events.length === 0) return <p>No events data available.</p>;
-
+const EventsDisplay = () => {
+    const events = useSelector((state) => state.eventsData);
     const speed = useSelector((state) => state.carouselSpeed) || 'classic';
-    const pinnedEvents = useSelector((state) => state.pinnedEvents) || [];
-    const unpinnedEvents = events.filter(event => !pinnedEvents.includes(event.id));
+    const pinnedEventsFromState = useSelector((state) => state.pinnedEvents) || [];
+    const favoriteTeams = useSelector((state) => state.favoriteTeams);
+    const selectedLeague = useSelector((state) => state.league);
+    const favoriteTeam = favoriteTeams[selectedLeague] || null;
+
+    // Determine events to pin based on favorite team
+    const favoriteTeamEvents = favoriteTeam
+        ? events.filter(event => {
+            // Check if any competitor's team.id matches favoriteTeam
+            return event.competitions.some(competition =>
+                competition.competitors.some(competitor => competitor.team.id === favoriteTeam)
+            );
+        }).map(event => event.id)
+        : [];
+
+    // Separate manually pinned events excluding favorite team events to avoid duplication
+    const manuallyPinnedEvents = pinnedEventsFromState.filter(eventId => !favoriteTeamEvents.includes(eventId));
+
+    // Combine all pinned events for carousel exclusion
+    const combinedPinnedEvents = Array.from(new Set([...favoriteTeamEvents, ...manuallyPinnedEvents]));
+
+    // Filter out events that are pinned
+    const unpinnedEvents = events.filter(event => !combinedPinnedEvents.includes(event.id));
 
     // Determine the speed settings based on the speed
     let autoplaySpeed = 3000; // default for 'classic'
@@ -61,7 +82,7 @@ const EventsDisplay = ({ events }) => {
         return () => {
             resizeObserver.disconnect();
         };
-    }, [pinnedEvents]); // Recalculate when pinnedEvents change
+    }, [combinedPinnedEvents]); // Recalculate when pinnedEvents or favoriteTeam change
 
     // Slider settings without 'responsive'
     const settings = {
@@ -76,19 +97,29 @@ const EventsDisplay = ({ events }) => {
         // Removed 'responsive' settings
     };
 
+    // Separate pinned events for rendering
+    const favoritePinnedEvents = events.filter(event => favoriteTeamEvents.includes(event.id));
+    const manualPinnedEvents = events.filter(event => manuallyPinnedEvents.includes(event.id));
+
     return (
         <div className="my-0 bg-base overflow-hidden">
             <div className="flex items-stretch">
                 {/* Pinned Events Section */}
-                {pinnedEvents.length > 0 && (
+                {(favoritePinnedEvents.length > 0 || manualPinnedEvents.length > 0) && (
                     <div className="flex flex-shrink-0 h-full overflow-hidden border-r-2 border-surface0 shadow">
-                        {events
-                            .filter(event => pinnedEvents.includes(event.id))
-                            .map(event => (
-                                <div key={event.id} className="event-slide">
-                                    <EventCard event={event} />
-                                </div>
-                            ))}
+                        {/* Favorite Team Pinned Events */}
+                        {favoritePinnedEvents.map(event => (
+                            <div key={event.id} className="event-slide">
+                                <EventCard event={event} />
+                            </div>
+                        ))}
+
+                        {/* Manually Pinned Events */}
+                        {manualPinnedEvents.map(event => (
+                            <div key={event.id} className="event-slide">
+                                <EventCard event={event} />
+                            </div>
+                        ))}
                     </div>
                 )}
 

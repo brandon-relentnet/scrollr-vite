@@ -7,6 +7,8 @@ import speedReducer from './store/speedSlice';
 import pinnedEventsReducer from './store/pinnedEventsSlice';
 import leagueReducer from './store/leagueSlice'; // Import leagueReducer
 import { loadState, saveState } from './localStorage';
+import favoriteTeamsReducer from './store/favoriteTeamsSlice'; // Import favoriteTeamReducer
+import eventsReducer from './store/eventsSlice'; // Import eventsReducer
 
 const preloadedState = loadState();
 
@@ -17,7 +19,9 @@ export const store = configureStore({
         fontFamily: fontFamilyReducer,
         carouselSpeed: speedReducer,
         pinnedEvents: pinnedEventsReducer,
-        league: leagueReducer, // Add league to reducers
+        league: leagueReducer,
+        favoriteTeams: favoriteTeamsReducer,
+        eventsData: eventsReducer,
     },
     preloadedState, // Load initial state from local storage
 });
