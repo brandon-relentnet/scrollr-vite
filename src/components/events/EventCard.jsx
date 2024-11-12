@@ -4,6 +4,7 @@ import TeamInfo from './TeamInfo';
 import ScoreDisplay from './ScoreDisplay';
 import { useDispatch, useSelector } from 'react-redux';
 import { pinEvent, unpinEvent } from '../../store/pinnedEventsSlice';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 const EventCard = ({ event }) => {
     const gameLink =
@@ -42,7 +43,7 @@ const EventCard = ({ event }) => {
                     </div>
 
                     {/* Score Display */}
-                    <div className="flex flex-col items-center mx-4 min-w-0">
+                    <div className="flex flex-col items-center mx-2 min-w-0 w-1/4">
                         <ScoreDisplay
                             homeTeam={homeTeam}
                             awayTeam={awayTeam}
@@ -59,10 +60,13 @@ const EventCard = ({ event }) => {
                 {/* Pin/Unpin Button */}
                 <button
                     onClick={handlePinClick}
-                    className="absolute top-2 right-2 p-1 bg-surface1 rounded-full hover:bg-surface2"
+                    className="absolute top-1 right-1 py-1 px-3 rounded hover:bg-surface1 transition duration-300"
                     title={isPinned ? 'Unpin Event' : 'Pin Event'}
                 >
-                    {isPinned ? '📌' : '📍'}
+                    <FontAwesomeIcon
+                        icon={isPinned ? 'times' : 'map-pin'}
+                        className={`text-lg ${isPinned ? 'text-red' : 'text-overlay1'}`}
+                    />
                 </button>
             </div>
         </div>

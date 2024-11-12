@@ -77,15 +77,15 @@ const EventsDisplay = ({ events }) => {
     };
 
     return (
-        <div className="mt-4 bg-base overflow-hidden">
+        <div className="my-0 bg-base overflow-hidden">
             <div className="flex items-stretch">
                 {/* Pinned Events Section */}
                 {pinnedEvents.length > 0 && (
-                    <div className="flex flex-shrink-0 h-full overflow-hidden mr-4">
+                    <div className="flex flex-shrink-0 h-full overflow-hidden border-r-2 border-surface0 shadow">
                         {events
                             .filter(event => pinnedEvents.includes(event.id))
                             .map(event => (
-                                <div key={event.id} className="event-slide mx-2">
+                                <div key={event.id} className="event-slide">
                                     <EventCard event={event} />
                                 </div>
                             ))}

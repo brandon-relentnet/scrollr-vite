@@ -19,13 +19,13 @@ const ScoreDisplay = ({ homeTeam, awayTeam, isGameOver, eventStatus, eventDate }
     }
 
     return (
-        <div className="flex flex-col items-center mx-4">
+        <div className="flex flex-col items-center mx-0">
             <div className="flex items-center font-bold text-text">
-                <span className={`text-lg ${awayScoreClass}`}>{awayTeam.score}</span>
+                <span className={`text-xl ${awayScoreClass}`}>{awayTeam.score}</span>
                 <span className="mx-1">-</span>
-                <span className={`text-lg ${homeScoreClass}`}>{homeTeam.score}</span>
+                <span className={`text-xl ${homeScoreClass}`}>{homeTeam.score}</span>
             </div>
-            <p className="text-sm text-subtext0 text-center break-words">
+            <p className="text-xs text-subtext0 text-center break-words">
                 {eventStatus}
             </p>
         </div>
