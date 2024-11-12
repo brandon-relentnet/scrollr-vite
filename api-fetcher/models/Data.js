@@ -1,24 +1,20 @@
 // models/Data.js
-const mongoose = require('mongoose'); // Uses the already connected mongoose instance
+const mongoose = require('mongoose');
 
-const { Schema } = mongoose;
-
-const DataSchema = new Schema({
+const DataSchema = new mongoose.Schema({
     _id: {
-        type: String, // Using a string identifier for each API data
-        required: true,
+        type: String,
+        enum: ['nfl', 'mlb', 'nhl', 'nba'],
+        required: true
     },
     data: {
-        type: Schema.Types.Mixed, // Adjust based on your API responses
-        required: true,
+        type: Object,
+        required: true
     },
     fetchedAt: {
         type: Date,
-        default: Date.now,
-    },
-}, {
-    collection: 'data', // Specify your collection name if different
-});
+        default: Date.now
+    }
+}, { timestamps: true });
 
-// Create and export the model
 module.exports = mongoose.model('Data', DataSchema);

@@ -1,27 +1,20 @@
 // fetchDataAndSave.js
+
 require('dotenv').config(); // Load environment variables first
 
 const axios = require('axios');
-const connectDB = require('./db'); // Import the connection function
 const Data = require('./models/Data');
+const mongoose = require('mongoose');
 
-const API_URLS = process.env.VITE_API_URLS
-    ? process.env.VITE_API_URLS.split(',').map(url => url.trim())
-    : [];
-
-if (API_URLS.length === 0) {
-    console.error('❌ No API URLs provided. Please set VITE_API_URLS in your environment variables.');
-    process.exit(1);
-}
-
-// Mapping of APIs to meaningful identifiers
-const API_IDENTIFIERS = ['nfl', 'mlb', 'nhl', 'nba']; // Adjust as per your APIs
-
-// Function to fetch data from a single API URL
+/**
+ * Function to fetch data from a single API URL.
+ * @param {string} url - The API endpoint to fetch data from.
+ * @returns {object|null} - Returns the fetched data or null if an error occurs.
+ */
 const fetchData = async (url) => {
     try {
         const response = await axios.get(url);
-        console.log(`📥 Data fetched from API (${url}):`, response.data);
+        console.log(`📥 Data fetched from API (${url})`);
         return response.data;
     } catch (error) {
         console.error(`❌ Error fetching data from API (${url}):`, error.message);
@@ -29,55 +22,72 @@ const fetchData = async (url) => {
     }
 };
 
-// Helper function to generate a unique identifier based on the API name
-const generateIdentifier = (name) => {
-    return `api-data-${name}`; // e.g., api-data-nfl, api-data-mlb, etc.
+/**
+ * Function to determine if there are live games in the fetched data.
+ * @param {object} data - The data fetched from the API.
+ * @returns {boolean} - Returns true if there are live games, otherwise false.
+ */
+const determineLiveStatus = (data) => {
+    if (!data || !data.events) return false;
+
+    return data.events.some(event =>
+        event.status &&
+        event.status.type &&
+        event.status.type.state &&
+        event.status.type.state.toLowerCase() === 'in'
+    );
 };
 
-// Function to fetch data from all APIs and update MongoDB
-const fetchDataAndSave = async () => {
+/**
+ * Function to fetch data from an API, save it to MongoDB, emit via WebSocket,
+ * and determine the live game status.
+ * @param {string} leagueKey - The identifier for the league (e.g., 'nfl', 'mlb').
+ * @param {string} leagueUrl - The API URL for the league.
+ * @param {object} io - The Socket.io instance for emitting events.
+ * @returns {boolean|null} - Returns the live status (true/false) or null if an error occurs.
+ */
+const fetchDataAndSave = async (leagueKey, leagueUrl, io) => {
     try {
-        // Connect to MongoDB
-        await connectDB();
+        // Ensure MongoDB is connected
+        if (mongoose.connection.readyState === 0) {
+            await mongoose.connect(process.env.VITE_MONGO_URI, {
+                useNewUrlParser: true,
+                useUnifiedTopology: true,
+            });
+            console.log('✅ Connected to MongoDB.');
+        }
 
-        // Fetch data concurrently
-        const fetchPromises = API_URLS.map((url, index) =>
-            fetchData(url).then(data => ({
-                url,
-                data,
-                identifier: generateIdentifier(API_IDENTIFIERS[index]),
-            }))
-        );
-        const results = await Promise.all(fetchPromises);
+        // Fetch data for the specific league
+        const data = await fetchData(leagueUrl);
 
-        // Process each result
-        for (const result of results) {
-            const { url, data, identifier } = result;
-            if (data) {
-                await Data.findOneAndUpdate(
-                    { _id: identifier },
-                    { data, fetchedAt: new Date() },
-                    { upsert: true, new: true, setDefaultsOnInsert: true }
-                );
-                console.log(`✅ Data saved to MongoDB for API (${url}) with identifier (${identifier})`);
-            }
+        if (data) {
+            // Determine if there are live games
+            const isLive = determineLiveStatus(data);
+
+            // Update or insert the data in MongoDB
+            await Data.findOneAndUpdate(
+                { _id: leagueKey },
+                { data, fetchedAt: new Date() },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+            );
+            console.log(`✅ Data saved to MongoDB for league (${leagueKey})`);
+
+            // Emit a 'dataUpdate' event via WebSocket
+            io.emit('dataUpdate', { identifier: leagueKey, data, fetchedAt: new Date() });
+            console.log(`📤 Emitted 'dataUpdate' event for league (${leagueKey}).`);
+
+            // Return the live status
+            return isLive;
+        } else {
+            console.error(`❌ No data fetched for league (${leagueKey}).`);
+            // Returning null to indicate that live status could not be determined
+            return null;
         }
     } catch (error) {
-        console.error('❌ Error saving data to MongoDB:', error.message);
+        console.error(`❌ Error saving data for league (${leagueKey}):`, error.message);
+        // Returning null to indicate that live status could not be determined due to an error
+        return null;
     }
 };
-
-// Execute the function if this script is run directly
-if (require.main === module) {
-    fetchDataAndSave()
-        .then(() => {
-            console.log('🎉 All data fetched and saved successfully.');
-            process.exit(0); // Exit the process successfully
-        })
-        .catch((error) => {
-            console.error('❌ An error occurred:', error);
-            process.exit(1); // Exit the process with failure
-        });
-}
 
 module.exports = fetchDataAndSave;

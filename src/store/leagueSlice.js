@@ -3,7 +3,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 const leagueSlice = createSlice({
     name: 'league',
-    initialState: 'api-data-nhl', // Default league identifier
+    initialState: 'nfl', // Default league identifier
     reducers: {
         setLeague: (state, action) => action.payload, // Set league based on payload
     },

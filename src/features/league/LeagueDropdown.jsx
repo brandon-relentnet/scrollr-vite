@@ -5,10 +5,10 @@ import { setLeague } from '../../store/leagueSlice';
 import Dropdown from '../../components/Dropdown';
 
 const leagueOptions = [
-    { value: 'api-data-nfl', label: 'NFL' },
-    { value: 'api-data-mlb', label: 'MLB' },
-    { value: 'api-data-nhl', label: 'NHL' },
-    { value: 'api-data-nba', label: 'NBA' },
+    { value: 'nfl', label: 'NFL' },
+    { value: 'mlb', label: 'MLB' },
+    { value: 'nhl', label: 'NHL' },
+    { value: 'nba', label: 'NBA' },
 ];
 
 function LeagueDropdown() {
