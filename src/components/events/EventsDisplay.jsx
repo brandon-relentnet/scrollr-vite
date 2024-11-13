@@ -106,7 +106,7 @@ const EventsDisplay = () => {
             <div className="flex items-stretch">
                 {/* Pinned Events Section */}
                 {(favoritePinnedEvents.length > 0 || manualPinnedEvents.length > 0) && (
-                    <div className="flex flex-shrink-0 h-full overflow-hidden shadow">
+                    <div className="flex flex-shrink-0 h-full overflow-hidden rounded bg-mantle">
                         {/* Favorite Team Pinned Events */}
                         {favoritePinnedEvents.map(event => (
                             <div key={event.id} className="event-slide">
