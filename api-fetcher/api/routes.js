@@ -1,4 +1,4 @@
-// routes.js
+// api/routes.js
 const express = require('express');
 const Data = require('../models/Data');
 

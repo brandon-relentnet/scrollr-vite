@@ -6,7 +6,8 @@ const http = require('http');
 const socketIo = require('socket.io');
 const connectDB = require('./api/db'); // Import the connectDB function
 const routes = require('./api/routes');
-const cronJob = require('./api/cronJob'); // Import cron job as a function
+const startAgenda = require('./api/cronJob'); // Import Agenda-based cron job function
+const { agenda, logger } = require('./agenda'); // Import Agenda and logger
 
 const app = express();
 const PORT = process.env.VITE_PORT || 3000;
@@ -40,9 +41,24 @@ io.on('connection', (socket) => {
 connectDB(); // Call the function to connect to the database
 
 // Start the server
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
 
-    // Start cron job and pass the `io` instance
-    cronJob(io);
+    try {
+        // Start Agenda and initialize jobs with access to 'io'
+        await startAgenda(io);
+    } catch (error) {
+        logger.error(`❌ Failed to start Agenda scheduler: ${error.message}`);
+        process.exit(1);
+    }
 });
+
+// Graceful shutdown
+const graceful = async () => {
+    logger.info('🛑 Shutting down gracefully...');
+    await agenda.stop();
+    process.exit(0);
+};
+
+process.on('SIGTERM', graceful);
+process.on('SIGINT', graceful);
