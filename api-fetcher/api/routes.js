@@ -1,6 +1,6 @@
 // routes.js
 const express = require('express');
-const Data = require('./models/Data');
+const Data = require('../models/Data');
 
 const router = express.Router();
 

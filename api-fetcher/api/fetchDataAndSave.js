@@ -1,14 +1,18 @@
-// fetchDataAndSave.js
-const { compareDatesAndTimeDifference, sortAscendingArray, isSameDate, convertUTCToEST, getCurrentESTISO, addValueIfNotNegative } = require('./formatDate');
+const { 
+    compareDatesAndTimeDifference, 
+    isSameDate, 
+    convertUTCToEST, 
+    getCurrentESTISO, 
+    addValueIfNotNegative 
+    } = require('./utils');
 require('dotenv').config();
 
 const axios = require('axios');
-const Data = require('./models/Data');
+const Data = require('../models/Data');
 const mongoose = require('mongoose');
 
 let range = null;
-
-let dataSetCounter = 1;
+let dataSetCounter = 0;
 
 /**
  * Fetch data from a single API URL with retry mechanism.
@@ -18,8 +22,6 @@ let dataSetCounter = 1;
  * @returns {object|null} - Fetched data or null if an error occurs.
  */
 const fetchData = async (url, retries = 3, delay = 1000) => {
-    console.log();
-    console.log(`\x1b[32m📍 Dataset #${dataSetCounter}\x1b[0m`);
     try {
         const response = await axios.get(url);
         console.log(`📥 Data fetched from API (${url})`);
@@ -47,72 +49,50 @@ const determineGameStatus = (data) => {
     let isEventLive = false;
     let isEventOver = false;
     let nextEventStartTime = null;
-    
-    // Get the current date with time
     const currentISO = getCurrentESTISO();
-    console.log();
-    console.log(`\x1b[33m🕜 Current ISO Time: ${currentISO}\x1b[0m`);
-    console.log();
 
-    let eventCounter = 0;
     let numbers = [];
-    data.events.forEach(event => {
-        if (!event.date) return;
-        console.log(`\x1b[34m📆 Event ${eventCounter}\x1b[0m`);
-        eventCounter++;
+    const eventSummaries = [];
 
-        const eventName = event.shortName;
-        const eventDateWithTime = event.date;
+    data.events.forEach((event) => {
+        const { date: eventDateWithTime, shortName: eventName } = event;
+        if (!eventDateWithTime) return;
 
         const eventISO = convertUTCToEST(eventDateWithTime);
-        console.log(`Event Name: ${eventName} | Event ISO Time: ${eventISO}`);
-        
-        // Only calculate the difference if eventISO is valid
+        let diffInMinutes = null;
+        let eventStatus = 'Unknown';
+
         if (eventISO) {
-            const diffInMinutes = compareDatesAndTimeDifference(currentISO, eventISO);
+            diffInMinutes = compareDatesAndTimeDifference(currentISO, eventISO);
             addValueIfNotNegative(diffInMinutes, numbers);
-        } else {
-            console.log(`Event ${eventName} has an invalid date format: ${eventDateWithTime}`);
-        }
-
-        // Check if the event is today
-        if (isSameDate(currentISO, eventISO)) {
-            // Determine the status of the game
-            const status = event.status.type.state;
-
-            console.log(`🏁 Game Status: ${status}`);
-
-            if (status === 'in') {
-                isEventLive = true;
-            } else if (status === 'post') {
-                isEventOver = true;
+            if (isSameDate(currentISO, eventISO)) {
+                eventStatus = event.status.type.state;
+                isEventLive = isEventLive || eventStatus === 'in';
+                isEventOver = isEventOver || eventStatus === 'post';
             }
-
-            numbers = numbers.filter(n => n !== null);
-            numbers = numbers.filter(n => n >= 0).sort((a, b) => a - b);
-
-            if (numbers > 0) {
-                nextEventStartTime = numbers[0];
-                console.log(nextEventStartTime);
-            } 
         }
-        console.log();
-    });
-    
-    numbers = numbers.filter(n => n !== null);
-    numbers = numbers.filter(n => n >= 0).sort((a, b) => a - b);
 
-    if (numbers.length > 1) {
-        range = numbers[numbers.length - 1] - numbers[0];
-        console.log(`\x1b[33m📊 Range\x1b[0m`);
-        console.log(numbers);
-        console.log(range);
-    } else {
-        range = null;
-        console.log(`\x1b[33m📊 Range\x1b[0m`);
-        console.log('No valid time differences found.'); 
-    }
-    
+        eventSummaries.push({
+            name: eventName,
+            isoTime: eventISO || 'Invalid date format',
+            status: eventStatus,
+            timeDiff: diffInMinutes !== null ? `${diffInMinutes} mins` : 'N/A',
+        });
+    });
+
+    numbers = numbers.filter(n => n >= 0).sort((a, b) => a - b);
+    nextEventStartTime = numbers.length ? numbers[0] : null;
+    range = numbers.length > 1 ? numbers[numbers.length - 1] - numbers[0] : null;
+
+    console.log(`\n\x1b[34m📆 Event Details for Dataset #${dataSetCounter}\x1b[0m`);
+    eventSummaries.forEach((event, idx) => {
+        console.log(`Event ${idx + 1}: ${event.name} | Time: ${event.isoTime} | Status: ${event.status} | Time Difference: ${event.timeDiff}`);
+    });
+
+    console.log(`\n\x1b[33m📊 Polling Statistics for Dataset #${dataSetCounter}\x1b[0m`);
+    console.log(`Upcoming Event Start Time: ${nextEventStartTime !== null ? `${nextEventStartTime} mins` : 'No upcoming events'}`);
+    console.log(`Range: ${range !== null ? `${range} mins` : 'No valid time differences found.'}`);
+
     return { isEventLive, isEventOver, nextEventStartTime, range };
 };
 
@@ -125,33 +105,34 @@ const determineGameStatus = (data) => {
  */
 const fetchDataAndSave = async (leagueKey, leagueUrl, io) => {
     try {
-        // Connect to MongoDB if not already connected
         if (mongoose.connection.readyState === 0) {
             await mongoose.connect(process.env.VITE_MONGO_URI);
             console.log('🎉 Connected to MongoDB.');
         }
 
+        
         const data = await fetchData(leagueUrl);
         if (!data) return null;
-        dataSetCounter++;
+        
 
-        // Save data to MongoDB
         await Data.findOneAndUpdate(
             { _id: leagueKey },
             { data, fetchedAt: new Date() },
             { upsert: true, new: true, setDefaultsOnInsert: true }
         );
+        dataSetCounter++;
+        console.log(`\n\x1b[32m📍 Dataset #${dataSetCounter}\x1b[0m`);
         console.log(`✅ Data saved to MongoDB for (${leagueKey})`);
 
-        // Emit data via WebSocket
         io.emit('dataUpdate', { identifier: leagueKey, data, fetchedAt: new Date() });
         console.log(`📤 Emitted 'dataUpdate' event for (${leagueKey}).`);
 
-        // Determine if there are games today and their statuses
         const { isEventLive, isEventOver, nextEventStartTime } = determineGameStatus(data);
-        console.log(`\x1b[33m💾 Statistics\x1b[0m`);
-        console.log(`${leagueKey.toUpperCase()} has live events: ${isEventLive}, finished-events: ${isEventOver}, next event in ${nextEventStartTime} minutes.`);
+        console.log(`\x1b[0m\n${'-'.repeat(50)}\n`);
+        console.log(`\x1b[33m💾 Summary for ${leagueKey.toUpperCase()}\x1b[0m`);
+        console.log(`${leagueKey.toUpperCase()} has live events: ${isEventLive}, finished events: ${isEventOver}, next event in: ${nextEventStartTime} mins.`);
         
+
         return { isEventLive, isEventOver, nextEventStartTime, range };
     } catch (error) {
         console.error(`❌ Error processing data for (${leagueKey}):`, error.message);

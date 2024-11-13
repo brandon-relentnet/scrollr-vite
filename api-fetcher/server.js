@@ -4,9 +4,9 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const socketIo = require('socket.io');
-const connectDB = require('./db'); // Import the connectDB function
-const routes = require('./routes');
-const cronJob = require('./cronJob'); // Import cron job as a function
+const connectDB = require('./api/db'); // Import the connectDB function
+const routes = require('./api/routes');
+const cronJob = require('./api/cronJob'); // Import cron job as a function
 
 const app = express();
 const PORT = process.env.VITE_PORT || 3000;
