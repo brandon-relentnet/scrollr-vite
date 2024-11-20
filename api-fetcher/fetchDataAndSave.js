@@ -104,9 +104,9 @@ const determineGameStatus = (data) => {
     // Determine polling category based on next event timing
     let pollingCategory = 'low'; // Default
     if (nextEventStartTime !== null) {
-        if (nextEventStartTime <= 60) { // Within the next hour
+        if (nextEventStartTime <= 5) { // Within the next hour
             pollingCategory = 'high';
-        } else if (nextEventStartTime <= 360) { // Within the next 6 hours
+        } else if (nextEventStartTime <= 60) { // Within the next 1 hour
             pollingCategory = 'medium';
         } else {
             pollingCategory = 'low';

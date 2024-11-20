@@ -67,12 +67,27 @@ let ioInstance = null;
 const determineStatus = (isEventLive, isEventOver) => (isEventLive ? 'in' : isEventOver ? 'post' : 'pregame');
 
 /**
+ * Schedules a one-time job to adjust the polling frequency at a specific time.
+ * @param {string} leagueKey - The identifier for the league (e.g., 'nfl').
+ * @param {string} targetPollingCategory - The target polling category ('high', 'medium', 'low').
+ * @param {Date} adjustTime - The time at which to adjust the polling frequency.
+ */
+const schedulePollingAdjustment = async (leagueKey, targetPollingCategory, adjustTime) => {
+    const jobName = 'adjust polling';
+    await agenda.schedule(adjustTime, jobName, { leagueKey, targetPollingCategory });
+    logger.info(`🕒 Scheduled polling adjustment for ${leagueKey.toUpperCase()} to '${targetPollingCategory}' at ${adjustTime}.`);
+    // Added console log for scheduled polling adjustment time
+    console.log(`🕒 Scheduled polling adjustment for ${leagueKey.toUpperCase()} to '${targetPollingCategory}' at ${adjustTime.toLocaleString()}.`);
+};
+
+/**
  * Reschedule polling for a league based on its new status and polling category.
  * @param {string} leagueKey - The identifier for the league (e.g., 'nfl').
  * @param {string} status - The new status of the league ('in', 'post', 'pregame').
  * @param {string} pollingCategory - The urgency category ('high', 'medium', 'low').
+ * @param {number|null} nextEventStartTime - Time in minutes until the next event starts.
  */
-const reschedulePolling = async (leagueKey, status, pollingCategory) => {
+const reschedulePolling = async (leagueKey, status, pollingCategory, nextEventStartTime) => {
     const jobName = 'poll league';
     // Determine current polling category
     const currentJobs = await agenda.jobs({ name: jobName, 'data.leagueKey': leagueKey });
@@ -92,31 +107,75 @@ const reschedulePolling = async (leagueKey, status, pollingCategory) => {
     // Only reschedule if pollingCategory has changed
     if (currentPollingCategory !== pollingCategory) {
         await agenda.cancel({ name: jobName, 'data.leagueKey': leagueKey });
+        // Cancel any existing 'adjust polling' jobs for this league
+        await agenda.cancel({ name: 'adjust polling', 'data.leagueKey': leagueKey });
 
         const selectedPollingConfig = pollingConfigs[pollingCategory] || pollingConfigs.low;
         const cronExpression = selectedPollingConfig.cron;
 
         logger.info(`🔄 Rescheduling polling for ${leagueKey.toUpperCase()} with interval '${cronExpression}' (${selectedPollingConfig.description}).`);
         console.log(`\x1b[0m\n${'-'.repeat(50)}\n`);
+        console.log(`🔄 Rescheduling polling for ${leagueKey.toUpperCase()} with interval '${cronExpression}' (${selectedPollingConfig.description}).`);
+
         await agenda.every(cronExpression, jobName, { leagueKey, status });
+
+        // Schedule polling adjustments if necessary
+        if (nextEventStartTime !== null) {
+            const now = new Date();
+            // Schedule adjustment to 'medium' at 60 minutes before the game
+            if (nextEventStartTime > 60 && pollingCategory === 'low') {
+                const adjustTime = new Date(now.getTime() + (nextEventStartTime - 60) * 60 * 1000);
+                await schedulePollingAdjustment(leagueKey, 'medium', adjustTime);
+            }
+
+            // Schedule adjustment to 'high' at 5 minutes before the game
+            if (nextEventStartTime > 5 && pollingCategory !== 'high') {
+                const adjustTime = new Date(now.getTime() + (nextEventStartTime - 5) * 60 * 1000);
+                await schedulePollingAdjustment(leagueKey, 'high', adjustTime);
+            }
+        }
     } else {
         logger.info(`📌 Polling category for ${leagueKey.toUpperCase()} remains '${pollingCategory}'. No rescheduling needed.`);
+        console.log(`📌 Polling category for ${leagueKey.toUpperCase()} remains '${pollingCategory}'. No rescheduling needed.`);
     }
 };
 
-/**
- * Poll league API job definition.
- * This job fetches data from the league API and reschedules itself based on the game's status and polling category.
- */
+// Define the 'adjust polling' job
+agenda.define('adjust polling', async (job, done) => {
+    const { leagueKey, targetPollingCategory } = job.attrs.data;
+    try {
+        logger.info(`⏳ Executing polling adjustment for ${leagueKey.toUpperCase()} to '${targetPollingCategory}'.`);
+        console.log(`⏳ Executing polling adjustment for ${leagueKey.toUpperCase()} to '${targetPollingCategory}'.`);
+
+        // Fetch the latest data to determine the current status
+        const result = await limiter.schedule(() => fetchDataAndSave(leagueKey, LEAGUES[leagueKey], ioInstance));
+        if (result) {
+            const { isEventLive, isEventOver, nextEventStartTime } = result;
+            const status = determineStatus(isEventLive, isEventOver);
+
+            // Reschedule polling to the target category
+            await reschedulePolling(leagueKey, status, targetPollingCategory, nextEventStartTime);
+        }
+
+        done();
+    } catch (error) {
+        logger.error(`❌ Error adjusting polling for ${leagueKey.toUpperCase()}: ${error.message}`);
+        console.error(`❌ Error adjusting polling for ${leagueKey.toUpperCase()}: ${error.message}`);
+        done(error);
+    }
+});
+
+// Modify calls to reschedulePolling in 'poll league' job
 agenda.define('poll league', async (job, done) => {
     const { leagueKey, status } = job.attrs.data;
 
     try {
         logger.info(`⏰ Polling ${leagueKey.toUpperCase()} API for status '${status}'...`);
+        console.log(`⏰ Polling ${leagueKey.toUpperCase()} API for status '${status}'...`);
         const result = await limiter.schedule(() => fetchDataAndSave(leagueKey, LEAGUES[leagueKey], ioInstance));
 
         if (result) {
-            const { isEventLive, isEventOver, nextEventStartTime, range, pollingCategory } = result;
+            const { isEventLive, isEventOver, nextEventStartTime, pollingCategory } = result;
             const newStatus = determineStatus(isEventLive, isEventOver);
             const previousStatus = leagueStatusMap[leagueKey] || '';
 
@@ -125,9 +184,11 @@ agenda.define('poll league', async (job, done) => {
                 if (previousStatus === 'in' && newStatus !== 'in') {
                     currentActiveLeaguesCount--;
                     logger.info(`🔻 League ${leagueKey.toUpperCase()} has become inactive. Active leagues count: ${currentActiveLeaguesCount}`);
+                    console.log(`🔻 League ${leagueKey.toUpperCase()} has become inactive. Active leagues count: ${currentActiveLeaguesCount}`);
                 } else if (previousStatus !== 'in' && newStatus === 'in') {
                     currentActiveLeaguesCount++;
                     logger.info(`🔺 League ${leagueKey.toUpperCase()} has become active. Active leagues count: ${currentActiveLeaguesCount}`);
+                    console.log(`🔺 League ${leagueKey.toUpperCase()} has become active. Active leagues count: ${currentActiveLeaguesCount}`);
                 }
 
                 // Update the leagueStatusMap
@@ -135,12 +196,13 @@ agenda.define('poll league', async (job, done) => {
             }
 
             // Reschedule polling based on the new status and polling category
-            await reschedulePolling(leagueKey, newStatus, pollingCategory);
+            await reschedulePolling(leagueKey, newStatus, pollingCategory, nextEventStartTime);
         }
 
         done();
     } catch (error) {
         logger.error(`❌ Error polling ${leagueKey.toUpperCase()}: ${error.message}`);
+        console.error(`❌ Error polling ${leagueKey.toUpperCase()}: ${error.message}`);
         done(error);
     }
 });
@@ -151,6 +213,7 @@ agenda.define('poll league', async (job, done) => {
  */
 agenda.define('daily update', async (job, done) => {
     logger.info(`🗓️ Daily update triggered. Re-initializing polling based on new game schedules...`);
+    console.log(`🗓️ Daily update triggered. Re-initializing polling based on new game schedules...`);
 
     // Reset statuses and active league count
     for (const leagueKey of API_IDENTIFIERS) {
@@ -166,7 +229,7 @@ agenda.define('daily update', async (job, done) => {
         try {
             const result = await fetchDataAndSave(leagueKey, LEAGUES[leagueKey], ioInstance);
             if (result) {
-                const { isEventLive, isEventOver, nextEventStartTime, range, pollingCategory } = result;
+                const { isEventLive, isEventOver, nextEventStartTime, pollingCategory } = result;
                 const status = determineStatus(isEventLive, isEventOver);
                 leagueStatusMap[leagueKey] = status;
 
@@ -175,10 +238,11 @@ agenda.define('daily update', async (job, done) => {
                 }
 
                 // Reschedule polling based on pollingCategory
-                await reschedulePolling(leagueKey, status, pollingCategory);
+                await reschedulePolling(leagueKey, status, pollingCategory, nextEventStartTime);
             }
         } catch (error) {
             logger.error(`❌ Error initializing polling for ${leagueKey.toUpperCase()}: ${error.message}`);
+            console.error(`❌ Error initializing polling for ${leagueKey.toUpperCase()}: ${error.message}`);
         }
     }
 
@@ -197,7 +261,7 @@ const initializeJobs = async (io) => {
         try {
             const result = await fetchDataAndSave(leagueKey, LEAGUES[leagueKey], ioInstance);
             if (result) {
-                const { isEventLive, isEventOver, nextEventStartTime, range, pollingCategory } = result;
+                const { isEventLive, isEventOver, nextEventStartTime, pollingCategory } = result;
                 const status = determineStatus(isEventLive, isEventOver);
                 leagueStatusMap[leagueKey] = status;
 
@@ -206,14 +270,16 @@ const initializeJobs = async (io) => {
                 }
 
                 // Reschedule polling based on pollingCategory
-                await reschedulePolling(leagueKey, status, pollingCategory);
+                await reschedulePolling(leagueKey, status, pollingCategory, nextEventStartTime);
             }
         } catch (error) {
             logger.error(`❌ Error initializing polling for ${leagueKey.toUpperCase()}: ${error.message}`);
+            console.error(`❌ Error initializing polling for ${leagueKey.toUpperCase()}: ${error.message}`);
         }
     }
 
     logger.info(`📊 Initialized polling with ${currentActiveLeaguesCount} active league(s).`);
+    console.log(`📊 Initialized polling with ${currentActiveLeaguesCount} active league(s).`);
 };
 
 /**
@@ -226,6 +292,7 @@ const scheduleDailyUpdate = async (io) => {
 
     await agenda.every(config.dailyUpdateCron, 'daily update');
     logger.info(`📅 Daily update job scheduled to run at '${config.dailyUpdateCron}'.`);
+    console.log(`📅 Daily update job scheduled to run at '${config.dailyUpdateCron}'.`);
 };
 
 module.exports = { initializeJobs, scheduleDailyUpdate };
